@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Monaco Editor</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: #1e1e1e; }
+        #container { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+        
+        let editor;
+        let initialText = '';
+        
+        require(['vs/editor/editor.main'], function() {
+            monaco.languages.register({ id: 'luau' });
+            
+            monaco.languages.setMonarchTokensProvider('luau', {
+                keywords: ['and', 'break', 'continue', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while'],
+                typeKeywords: ['string', 'number', 'boolean', 'table', 'function', 'userdata', 'thread', 'any', 'void'],
+                operators: ['+', '-', '*', '/', '%', '^', '#', '==', '~=', '<=', '>=', '<', '>', '=', '(', ')', '{', '}', '[', ']', ';', ':', ',', '.', '..', '...'],
+                tokenizer: {
+                    root: [
+                        [/[a-zA-Z_]\w*/, { cases: { '@keywords': 'keyword', '@typeKeywords': 'type', '@default': 'identifier' } }],
+                        [/[{}()\[\]]/, '@brackets'],
+                        [/\d+(\.\d+)?/, 'number'],
+                        [/"([^"\\]|\\.)*"/, 'string'],
+                        [/'([^'\\]|\\.)*'/, 'string'],
+                        [/--\[\[.*?\]\]/, 'comment'],
+                        [/--.*/, 'comment'],
+                    ]
+                }
+            });
+            
+            monaco.editor.defineTheme('wave-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'keyword', foreground: '569CD6' },
+                    { token: 'type', foreground: '4EC9B0' },
+                    { token: 'string', foreground: 'CE9178' },
+                    { token: 'number', foreground: 'B5CEA8' },
+                    { token: 'comment', foreground: '6A9955' },
+                ],
+                colors: {
+                    'editor.background': '#1e1e1e',
+                    'editor.foreground': '#d4d4d4',
+                    'editorLineNumber.foreground': '#858585',
+                    'editorCursor.foreground': '#aeafad',
+                    'editor.selectionBackground': '#264f78',
+                }
+            });
+            
+            editor = monaco.editor.create(document.getElementById('container'), {
+                value: initialText || 'print("Hello World!")',
+                language: 'luau',
+                theme: 'wave-dark',
+                automaticLayout: true,
+                minimap: { enabled: true },
+                fontSize: 14,
+                lineNumbers: 'on',
+                roundedSelection: false,
+                scrollBeyondLastLine: false,
+                readOnly: false,
+                inlayHints: { enabled: true },
+            });
+            
+            window.getText = function() {
+                return editor.getValue();
+            };
+            
+            window.setText = function(text) {
+                editor.setValue(text);
+            };
+            
+            window.goToLine = function(line) {
+                editor.revealLineInCenter(line);
+                editor.setPosition({ lineNumber: line, column: 1 });
+                editor.focus();
+            };
+            
+            window.setTheme = function(theme) {
+                monaco.editor.setTheme(theme);
+            };
+            
+            window.updateOptions = function(optionsJson) {
+                const options = typeof optionsJson === 'string' ? JSON.parse(optionsJson) : optionsJson;
+                editor.updateOptions(options);
+            };
+            
+            document.dispatchEvent(new Event('monaco-ready'));
+        });
+    </script>
+</body>
+</html>
